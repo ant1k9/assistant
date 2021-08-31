@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+<!--
+###############################################
+        TITLE BLOCK
+###############################################
+-->
+{% block title %} Sign up {% endblock %}
+
+<!--
+###############################################
+       LEFT CONTENT BLOCK
+###############################################
+-->
+
+{% block content %}
+
+<form method="post" action="{% url 'signup' %}">
+    {% csrf_token %}
+    <div style="margin-left: 25%; margin-top: 100px; font-size: 20px;">
+        {% if form.errors %}
+        {% for field in form.visible_fields %}
+        {% for error in field.errors %}
+        <p style="color:red">{{ error }}</p>
+        {% endfor %}
+        {% endfor %}
+        {% endif %}
+        <table>
+            <tr>
+                <td style="width: 50%">Sign Up</td>
+                <td style="height: 100px; text-align: left">
+                    <input class="btn_spec" style="padding: 10px 50px; margin: 0% 15%;" type="submit" value="Submit"/>
+                </td>
+            </tr>
+            {% for field in form %}
+            <tr>
+                <td> {{ field.label }} </td>
+                <td> {{ field }}</td>
+            </tr>
+            <tr><td style="height:10px"></td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</form>
+
+{% endblock %}

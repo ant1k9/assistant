@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %} Login {% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block content %}
+
+<form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+    <div style="margin-left: 25%; margin-top: 100px; font-size: 20px;">
+        {% if form.errors %}
+        <p style="color:red">Your username and password didn't match. Please try again.</p>
+        {% endif %}
+
+        <table>
+            <tr>
+                <td style="width: 50%">Log In</td>
+                <td style="height: 60px; text-align: left;">
+                    <input class="w3-button" style="padding: 10px 50px; margin: 0% 15%;" type="submit" value="Submit"/>
+                </td>
+            </tr>
+            <tr>
+                <td>Username</td>
+                <td>{{ form.username }}</td>
+            </tr>
+            <tr><td style="height:10px"></td></tr>
+            <tr>
+                <td>Password</td>
+                <td>{{ form.password }}</td>
+            </tr>
+        </table>
+        <input type="hidden" name="next" value="{% url 'work' %}"/>
+    </div>
+</form>
+
+{% endblock %}
+
+

@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %} Head Hunter Vacancies {% endblock %}
+
+{% block sidebar %}
+<h4 class="w3-bar-item"><b>Salary</b></h4>
+<form action="{% url 'work' %}">
+    <table style="margin-left: 15px">
+        <tr>
+            <td style="padding-right: 10px">From</td>
+            <td><input name="salary_from" style="width: 150px"/></td>
+        </tr>
+        <tr>
+            <td>To</td>
+            <td><input name="salary_to" style="width: 150px"/></td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input hidden name="tags" value="{{ tags }}"/>
+                <input hidden name="days_hours_ago" value="{{ days_hours_ago }}"/>
+                <input hidden name="page" value="{{ page }}"/>
+                <button type="submit">Submit</button>
+            </td>
+        </tr>
+    </table>
+</form>
+</h4>
+
+<h4 class="w3-bar-item"><b>Tags</b></h4>
+{% for tag in tags_items %}
+<div class="w3-bar-item" style="margin: 0px; padding: 0px">
+<a class="w3-button w3-hover-black" href="{% url 'work' %}?tags={{ tag }}">{{ tag }}</a>
+<a class="w3-button w3-hover-black" style="float: right"
+   href="{% url 'delete_usertag' %}?tag={{ tag }}&user_id={{ request.user.id }}"> X </a>
+</div>
+{% endfor %}
+
+<h4 class="w3-bar-item"><b>Companies</b></h4>
+{% for employer in employers %}
+<a class="w3-bar-item w3-button w3-hover-black" href="{% url 'work' %}?employer={{ employer }}">{{ employer }}</a>
+{% endfor %}
+{% endblock %}
+
+
+{% block content %}
+<!-- Main content: shift it to the right by 250 pixels when the sidebar is visible -->
+<div class="w3-main" style="margin-left:250px; margin-top:50px">
+  <div class="w3-row w3-padding-16">
+    <div class="w3-twothird w3-container" style="font-size: 20px">
+        <form method="get" action="{% url 'work' %}">
+            <span style="display: inline-block; width: 400px">Filter by days and hours ago (like 1d 8h):</span>
+            <input name="days_hours_ago" placeholder="1d 4h" required style="margin-left: 30px" />
+            <input name="tags" value="{{ tags }}" type="hidden" />
+        </form>
+    </div>
+  </div>
+  <div class="w3-row w3-padding-16">
+    <div class="w3-twothird w3-container" style="font-size: 20px">
+        <form method="get" action="{% url 'add_tag' %}">
+            <span style="display: inline-block; width: 400px">Add or update tag (like python):</span>
+            <input name="new_tag" placeholder="python" required style="margin-left: 30px" />
+        </h4>
+        </form>
+    </div>
+  </div>
+  {% if average_salary_from or average_salary_to %}
+  <hr width="650px"/>
+  <table style="font-size: 20px">
+      <thead>
+          <th style="padding: 10px 90px">Average salary from</th>
+          <th style="padding: 10px 90px">Average salary to</th>
+      </thead>
+      <tr>
+          <td style="padding: 0px 15%">
+              {% if average_salary_from %}
+              {{ average_salary_from|floatformat:1 }}
+              {% else %} -
+              {% endif %}
+          </td>
+          <td style="padding: 0px 15%">
+              {% if average_salary_to %}
+              {{ average_salary_to|floatformat:1 }}
+              {% else %} -
+              {% endif %}
+          </td>
+      </tr>
+  </table>
+  <hr width="650px"/>
+  {% endif %}
+  <div id="salaryPlot" style="width: 775px"></div>
+  <script src="https://cdn.plot.ly/plotly-2.4.1.min.js"></script>
+  <script>
+    var data = [
+        {
+            x: [],
+            y: [],
+            name: 'Salary from (avg)',
+            type: 'bar',
+        },
+        {
+            x: [],
+            y: [],
+            name: 'Salary to (avg)',
+            type: 'bar',
+        },
+    ];
+
+    {% for week, salary in average_salary_from_by_month.items %}
+    data[0].x.push("{{ week }}");
+    data[0].y.push({{ salary }});
+    {% endfor %}
+
+    {% for week, salary in average_salary_to_by_month.items %}
+    data[1].x.push("{{ week }}");
+    data[1].y.push({{ salary }});
+    {% endfor %}
+
+    var layout = {barmode: 'group', legend: {x: 0.1, y: 1.2}};
+    Plotly.newPlot('salaryPlot', data, layout, {displayModeBar: false});
+  </script>
+  {% for vacancy in vacancies %}
+  <div class="w3-row w3-padding-16">
+    <div class="w3-twothird w3-container">
+        <a href="{{ vacancy.apply_url }}"><h1 class="w3-text-teal">{{ vacancy.vacancy }}</h1></a>
+        <p>
+        From <b>{{ vacancy.employer|default_if_none:"Unknown" }}</b>
+        {% if vacancy.subway %} on {{ vacancy.subway }} {% endif %}
+        </p>
+        <p>
+        Salary from
+        {% if vacancy.salary_from %} {{ vacancy.salary_from|floatformat:1 }} {% else %} ? {% endif %}
+        to
+        {% if vacancy.salary_to %} {{ vacancy.salary_to|floatformat:1 }} {% else %} ? {% endif %}
+        {{ vacancy.currency|default_if_none:"RUR" }}
+        </p>
+        <p>
+        Description: {{ vacancy.requirements|safe }} <br /><br />
+        {% if vacancy.responsibility %} {{ vacancy.responsibility|safe }} {% endif %}
+        </p>
+        <p>
+        Published at {{ vacancy.published_at }}
+        </p>
+        <br />
+        <div id="d-{{ vacancy.hh_id }}">
+            {% if vacancy.source == "hh" %}
+            <button class="desc-hh" data="{{ vacancy.hh_id }}">
+                ### FULL DESCRIPTION ###
+            </button>
+            {% elif vacancy.source == "moi_krug" %}
+            <button class="desc-moi-krug" data="{{ vacancy.hh_id }}">
+                ### FULL DESCRIPTION ###
+            </button>
+            {% endif %}
+        </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Pagination -->
+  <div class="w3-center w3-padding-32">
+    <div class="w3-bar">
+        {% if page != 1 %}
+        <a class="w3-button w3-black" href="{% url 'work' %}?tags={{ tags }}&days_hours_ago={{ days_hours_ago }}&page={{ page|add:'-1' }}&salary_from={{ salary_from }}&salary_to={{ salary_to}}">
+            {{ page|add:"-1" }}
+        </a>
+        {% endif %}
+        <a class="w3-button w3-black" href="#">{{ page }}</a>
+        <a class="w3-button w3-black" href="{% url 'work' %}?tags={{ tags }}&days_hours_ago={{ days_hours_ago }}&page={{ page|add:'1' }}&salary_from={{ salary_from }}&salary_to={{ salary_to}}">
+            {{ page|add:"1" }}
+        </a>
+    </div>
+  </div>
+
+  <footer id="myFooter">
+    <div class="w3-container w3-theme-l2 w3-padding-32">
+    </div>
+  </footer>
+
+<!-- END MAIN -->
+</div>
+
+{% endblock %}
