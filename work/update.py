@@ -10,7 +10,7 @@ import requests
 
 from django.conf import settings
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date, parse_datetime
 from lxml.etree import fromstring
 
 from .models import (
@@ -80,6 +80,49 @@ class VacancyLoader:
                     VacancyTag.objects.create(tag=tag_item, vacancy=vacancy_item)
                 else:
                     vacancy_item = vacancy_items[0]
+                    vacancy.pop('hh_id')
+                    for attr, value in vacancy.items():
+                        if value != getattr(vacancy_item, attr):
+                            setattr(vacancy_item, attr, value)
+                    vacancy_item.save()
+                    VacancyTag.objects.get_or_create(tag=tag_item, vacancy=vacancy_item)
+
+    def __load_your_gms(self, data: List[dict], tag: str) -> None:
+        if not Tag.objects.filter(value=tag):
+            Tag.objects.create(value=tag)
+
+        tag_item = Tag.objects.get(value=tag)
+
+        def _rehash(_hash: str) -> int:
+            result = 0
+            for ch in _hash:
+                result += (ord(ch) + result * 331) % 1_000_000_000
+            return result
+
+        for item in data:
+            if tag.lower() not in [t.lower() for t in item['stack']]:
+                continue
+
+            vacancy = dict(
+                apply_url=f'https://your.gms.tech/v/{item["id"]}',
+                currency='RUR',
+                employer=item['company'].get('name') if item.get('company') else None,
+                hh_id=_rehash(item.get('id')),
+                published_at=parse_date(item.get('published_at')),
+                requirements=item.get('offer_description'),
+                salary_from=item.get('salary_from'),
+                salary_to=item.get('salary_to'),
+                source='gms',
+                url=f'https://your.gms.tech/v/{item["id"]}',
+                vacancy=item.get('position'),
+            )
+
+            if vacancy['hh_id']:
+                vacancy_item = Vacancy.objects.filter(hh_id=vacancy['hh_id']).first()
+                if not vacancy_item:
+                    vacancy_item = Vacancy.objects.create(**vacancy)
+                    VacancyTag.objects.create(tag=tag_item, vacancy=vacancy_item)
+                else:
                     vacancy.pop('hh_id')
                     for attr, value in vacancy.items():
                         if value != getattr(vacancy_item, attr):
@@ -187,3 +230,8 @@ class VacancyLoader:
                 )
             ):
                 break
+
+        response = requests.get(settings.YOUR_GMS_TECH_URL)
+        if response.status_code == HTTPStatus.OK.value:
+            json_data = response.json()
+            self.__load_your_gms(json_data['offers'], tag)
