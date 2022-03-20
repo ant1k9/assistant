@@ -14,8 +14,8 @@ from .update import (
 
 
 def __get_exchange_rate(base: str):
-    response = requests.get(settings.EXCHANGE_RATE_URL.format(base=base)).json()
-    return response['rates']['RUB']
+    response = requests.get(settings.EXCHANGE_RATE_URL).json()
+    return response['Valute'][base]['Value']
 
 
 def update_foreign_currency_salaries():

@@ -9,7 +9,8 @@ MOI_KRUG_URL = (
 )
 
 EXCHANGE_RATE_URL = (
-    "https://www.currency-api.com/rates?base={base}&symbols=RUB"
+    #  "https://www.currency-api.com/rates?base={base}&symbols=RUB"
+    "https://www.cbr-xml-daily.ru/daily_json.js"
 )
 
 YOUR_GMS_TECH_URL = (
