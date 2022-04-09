@@ -105,13 +105,13 @@ class VacancyLoader:
 
             vacancy = dict(
                 apply_url=f'https://your.gms.tech/v/{item["id"]}',
-                currency='RUR',
+                currency=item.get('salary_currency'),
                 employer=item['company'].get('name') if item.get('company') else None,
                 hh_id=_rehash(item.get('id')),
                 published_at=parse_date(item.get('published_at')),
                 requirements=item.get('offer_description'),
-                salary_from=item.get('salary_from'),
-                salary_to=item.get('salary_to'),
+                salary_from=item.get('salary_display_from'),
+                salary_to=item.get('salary_display_to'),
                 source='gms',
                 url=f'https://your.gms.tech/v/{item["id"]}',
                 vacancy=item.get('position'),
