@@ -15,5 +15,5 @@ EXCHANGE_RATE_URL = (
 
 YOUR_GMS_TECH_URL = (
     "https://your.gms.tech/api/offers?sa=150000&p=1&pl=python&pl=java_scala"
-    "&pl=js_backend&pl=c_cpp&pl=golang&sp=dev_ops&pa=3d&offset=0&limit=100"
+    "&pl=js_backend&pl=c_cpp&pl=golang&sp=dev_ops&pa=8d&offset=0&limit=50"
 )
