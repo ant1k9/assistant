@@ -22,7 +22,7 @@ def update_foreign_currency_salaries():
     """
     Piece of documentation
     """
-    for currency_t in [('EUR', '€'), ('USD', '$')]:
+    for currency_t in (('EUR', '€'), ('USD', '$')):
         rate = __get_exchange_rate(currency_t[0])
         for currency in currency_t:
             for vacancy in Vacancy.objects.filter(currency__icontains=currency):
